@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# scan /sys/bus/pci/drivers/xhci_hcd for devices
+SCAN_PATH="/sys/bus/pci/drivers/xhci_hcd"
+
+# check if executed via sudo
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run as root"
+    exit
+fi
+
+DEVICE_IDS=()
+
+for device in $SCAN_PATH/*; do
+    # check if the device is a symlink
+    if [[ -L $device ]]; then
+        # get the real path of the device
+        real_path=$(readlink -f "$device")
+        # check if the real path is a directory
+        if [[ -d $real_path ]]; then
+            # check if it starts with /sys/devices
+            if [[ $real_path == /sys/devices/* ]]; then
+                # get the device ID
+                device_id=$(basename "$device")
+                DEVICE_IDS+=("$device_id")
+            fi
+        fi
+    fi
+done
+
+echo "Device IDs: ${DEVICE_IDS[@]}"
+
+# for every device, echo it into $SCAN_PATH/unbind and then into $SCAN_PATH/bind
+for device_id in "${DEVICE_IDS[@]}"; do
+    sudo echo "$device_id" > "$SCAN_PATH/unbind"
+    sudo echo "$device_id" > "$SCAN_PATH/bind"
+done
+echo "USB devices re-bound successfully."
