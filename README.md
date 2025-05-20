@@ -9,5 +9,6 @@ This script will rebind all the USB devices, which (at least for me) fixed the i
 Either put it in some folder thats in your `$PATH`, or if you use archlinux:
 
 ```bash
+# Use yay or some alternative
 $ yay -S framework-fix-usb
 ```
